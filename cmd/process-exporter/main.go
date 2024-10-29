@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"log"
 	"net/http"
 	_ "net/http/pprof"
@@ -143,9 +144,12 @@ func (nmr *nameMapperRegex) MatchAndName(nacl common.ProcAttributes) (bool, stri
 	return false, ""
 }
 
+// Create a new custom Prometheus registry
+var registry = prometheus.NewRegistry()
+
 func init() {
 	promVersion.Version = version
-	prometheus.MustRegister(verCollector.NewCollector("process_exporter"))
+	registry.MustRegister(verCollector.NewCollector("process_exporter"))
 }
 
 func main() {
@@ -183,6 +187,8 @@ func main() {
 		showVersion = flag.Bool("version", false,
 			"print version information and exit")
 		removeEmptyGroups = flag.Bool("remove-empty-groups", false, "forget process groups with no processes")
+		disableGoMetrics  = flag.Bool("collector.disable-go-runtime-metrics", false,
+			"Disable collection of Go runtime metrics")
 	)
 	flag.Parse()
 
@@ -259,7 +265,11 @@ func main() {
 		log.Fatalf("Error initializing: %v", err)
 	}
 
-	prometheus.MustRegister(pc)
+	registry.MustRegister(pc)
+	if !*disableGoMetrics {
+		// Register Go runtime metrics if the flag is not set
+		registry.MustRegister(collectors.NewGoCollector())
+	}
 
 	if *onceToStdoutDelay != 0 {
 		// We throw away the first result because that first collection primes the pump, and
@@ -275,7 +285,7 @@ func main() {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGTERM, syscall.SIGINT)
 
-	http.Handle(*metricsPath, promhttp.Handler())
+	http.Handle(*metricsPath, promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(`<html>

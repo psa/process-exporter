@@ -40,8 +40,11 @@ walking the process tree upwards. In other words, resource usage of
 subprocesses is added to their parent's usage unless the subprocess identifies
 as a different group name.
 
-`-threads` **(default:true)** means that metrics will be broken down by thread name
-as well as group name.
+`-collector.disable-go-runtime-metrics` **(default:false)** don't print Golang
+runtime metrics from the collector.
+
+`-threads` **(default:true)** means that metrics will be broken down by thread
+name as well as group name.
 
 `-recheck` **(default:false)** means that on each scrape the process names are
 re-evaluated. This is disabled by default as an optimization, but since
@@ -53,7 +56,9 @@ this feature only for a specific duration after process starts.
 `-procnames` is intended as a quick alternative to using a config file. Details
 in the following section.
 
-`-remove-empty-groups` **(default:false)** forget process groups with no processes.
+`-remove-empty-groups` **(default:false)** forget process groups with no
+processes.
+
 This is particularly useful if you have some process groups that you expect will
 never return (e.g. if you have process groups named "scan-<scan-id>", and once
 the scan is completed no more process will ever run for that scan again).
