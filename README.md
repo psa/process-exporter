@@ -1,20 +1,20 @@
 # process-exporter
 Prometheus exporter that mines /proc to report on selected processes.
 
-[release]: https://github.com/ncabatoff/process-exporter/releases/latest
+[release]: https://github.com/psa/process-exporter/releases/latest
 
-[![Release](https://img.shields.io/github/release/ncabatoff/process-exporter.svg?style=flat-square")][release]
+[![Release](https://img.shields.io/github/release/psa/process-exporter.svg?style=flat-square")][release]
 [![Powered By: GoReleaser](https://img.shields.io/badge/powered%20by-goreleaser-green.svg?branch=master)](https://github.com/goreleaser)
-![Build](https://github.com/ncabatoff/process-exporter/actions/workflows/build.yml/badge.svg)
+![Build](https://github.com/psa/process-exporter/actions/workflows/build.yml/badge.svg)
 
-Some apps are impractical to instrument directly, either because you
-don't control the code or they're written in a language that isn't easy to
-instrument with Prometheus.  We must instead resort to mining /proc.
+Some apps are impractical to instrument directly, either because you don't
+control the code or they're written in a language that isn't easy to instrument
+with Prometheus. We must instead resort to mining /proc.
 
 ## Installation
 
-Either grab a package for your OS from the [Releases][release] page, or
-install via [docker](https://hub.docker.com/r/ncabatoff/process-exporter/).
+Either grab a package for your OS from the [Releases][release] page, or install
+via [docker](https://hub.docker.com/r/psa/process-exporter/).
 
 ## Running
 
@@ -27,7 +27,7 @@ Usage:
 or via docker:
 
 ```
-  docker run -d --rm -p 9256:9256 --privileged -v /proc:/host/proc -v `pwd`:/config ncabatoff/process-exporter --procfs /host/proc -config.path /config/filename.yml
+  docker run -d --rm -p 9256:9256 --privileged -v /proc:/host/proc -v `pwd`:/config psa/process-exporter --procfs /host/proc -config.path /config/filename.yml
 
 ```
 
@@ -35,7 +35,7 @@ Important options (run process-exporter --help for full list):
 
 -children (default:true) makes it so that any process that otherwise
 isn't part of its own group becomes part of the first group found (if any) when
-walking the process tree upwards.  In other words, resource usage of
+walking the process tree upwards. In other words, resource usage of
 subprocesses is added to their parent's usage unless the subprocess identifies
 as a different group name.
 
@@ -49,12 +49,12 @@ falling into the wrong group if we happen to see it for the first time before
 it's assumed its proper name. You can use -recheck-with-time-limit to enable this
 feature only for a specific duration after process starts.
 
--procnames is intended as a quick alternative to using a config file.  Details
+-procnames is intended as a quick alternative to using a config file. Details
 in the following section.
 
 -remove-empty-groups (default:false) forget process groups with no processes.
-This is particularly useful if you have some process groups that you expect will 
-never return (e.g. if you have process groups named "scan-<scan-id>", and once 
+This is particularly useful if you have some process groups that you expect will
+never return (e.g. if you have process groups named "scan-<scan-id>", and once
 the scan is completed no more process will ever run for that scan again).
 
 To disable any of these options, use the `-option=false`.
@@ -100,7 +100,7 @@ the command-line arguments of a process `/proc/<pid>/cmdline` as the array
 #### Using a config file: group name
 
 Each item in `process_names` gives a recipe for identifying and naming
-processes.  The optional `name` tag defines a template to use to name
+processes. The optional `name` tag defines a template to use to name
 matching processes; if not specified, `name` defaults to `{{.ExeBase}}`.
 
 Template variables available:
@@ -108,14 +108,15 @@ Template variables available:
 - `{{.ExeBase}}` contains the basename of the executable
 - `{{.ExeFull}}` contains the fully qualified path of the executable
 - `{{.Username}}` contains the username of the effective user
-- `{{.Matches}}` map contains all the matches resulting from applying cmdline regexps
-- `{{.PID}}` contains the PID of the process.  Note that using PID means the group
+- `{{.Matches}}` map contains all the matches resulting from applying cmdline
+  regexps
+- `{{.PID}}` contains the PID of the process. Note that using PID means the group
   will only contain a single process.
-- `{{.StartTime}}` contains the start time of the process.  This can be useful
+- `{{.StartTime}}` contains the start time of the process. This can be useful
   in conjunction with PID because PIDs get reused over time.
 - `{{.Cgroups}}` contains (if supported) the cgroups of the process
-  (`/proc/self/cgroup`). This is particularly useful for identifying to which container
-  a process belongs.
+  (`/proc/self/cgroup`). This is particularly useful for identifying to which
+  container a process belongs.
 
 Using `PID` or `StartTime` is discouraged: this is almost never what you want,
 and is likely to result in high cardinality metrics which Prometheus will have
@@ -124,15 +125,15 @@ trouble with.
 #### Using a config file: process selectors
 
 Each item in `process_names` must contain one or more selectors (`comm`, `exe`
-or `cmdline`); if more than one selector is present, they must all match.  Each
+or `cmdline`); if more than one selector is present, they must all match. Each
 selector is a list of strings to match against a process's `comm`, `argv[0]`,
-or in the case of `cmdline`, a regexp to apply to the command line.  The cmdline
+or in the case of `cmdline`, a regexp to apply to the command line. The cmdline
 regexp uses the [Go syntax](https://golang.org/pkg/regexp).
 
 For `comm` and `exe`, the list of strings is an OR, meaning any process
 matching any of the strings will be added to the item's group.
 
-For `cmdline`, the list of regexes is an AND, meaning they all must match.  Any
+For `cmdline`, the list of regexes is an AND, meaning they all must match. Any
 capturing groups in a regexp must use the `?P<name>` option to assign a name to
 the capture, which is used to populate `.Matches`.
 
@@ -187,7 +188,7 @@ process_names:
 
 Every name in the procnames list becomes a process group. The default name of
 a process is the value found in the second field of /proc/<pid>/stat
-("comm"), which is truncated at 15 chars.  Usually this is the same as the
+("comm"), which is truncated at 15 chars. Usually this is the same as the
 name of the executable.
 
 If -namemapping isn't provided, every process with a comm value present
@@ -215,11 +216,12 @@ unless they're one of the others named explicitly with -procnames, like gvim.
 
 ## Group Metrics
 
-There's no meaningful way to name a process that will only ever name a single process, so process-exporter assumes that every metric will be attached
-to a group of processes - not a
-[process group](https://en.wikipedia.org/wiki/Process_group) in the technical
-sense, just one or more processes that meet a configuration's specification
-of what should be monitored and how to name it.
+There's no meaningful way to name a process that will only ever name a single
+process, so process-exporter assumes that every metric will be attached to a
+group of processes - not a [process
+group](https://en.wikipedia.org/wiki/Process_group) in the technical sense,
+just one or more processes that meet a configuration's specification of what
+should be monitored and how to name it.
 
 All these metrics start with `namedprocess_namegroup_` and have at minimum
 the label `groupname`.
@@ -234,10 +236,10 @@ CPU usage based on /proc/[pid]/stat fields utime(14) and stime(15) i.e. user and
 
 ### read_bytes_total counter
 
-Bytes read based on /proc/[pid]/io field read_bytes.  The man page
+Bytes read based on /proc/[pid]/io field read_bytes. The man page
 says
 
-> Attempt to count the number of bytes which this process really did cause to be fetched from the storage layer.  This is accurate for block-backed filesystems.
+> Attempt to count the number of bytes which this process really did cause to be fetched from the storage layer. This is accurate for block-backed filesystems.
 
 but I would take it with a grain of salt.
 
@@ -245,8 +247,8 @@ As `/proc/[pid]/io` are set by the kernel as read only to the process' user (see
 
 ### write_bytes_total counter
 
-Bytes written based on /proc/[pid]/io field write_bytes.  As with
-read_bytes, somewhat dubious.  May be useful for isolating which processes
+Bytes written based on /proc/[pid]/io field write_bytes. As with
+read_bytes, somewhat dubious. May be useful for isolating which processes
 are doing the most I/O, but probably not measuring just how much I/O is happening.
 
 ### major_page_faults_total counter
@@ -260,16 +262,16 @@ Number of minor page faults based on /proc/[pid]/stat field minflt(10).
 ### context_switches_total counter
 
 Number of context switches based on /proc/[pid]/status fields voluntary_ctxt_switches
-and nonvoluntary_ctxt_switches.  The extra label `ctxswitchtype` can have two values:
+and nonvoluntary_ctxt_switches. The extra label `ctxswitchtype` can have two values:
 `voluntary` and `nonvoluntary`.
 
 ### memory_bytes gauge
 
-Number of bytes of memory used.  The extra label `memtype` can have three values:
+Number of bytes of memory used. The extra label `memtype` can have three values:
 
 *resident*: Field rss(24) from /proc/[pid]/stat, whose doc says:
 
-> This is just the pages which count toward text, data, or stack space.  This does not include pages which have not been demand-loaded in, or which are swapped out.
+> This is just the pages which count toward text, data, or stack space. This does not include pages which have not been demand-loaded in, or which are swapped out.
 
 *virtual*: Field vsize(23) from /proc/[pid]/stat, virtual memory size.
 
@@ -307,13 +309,13 @@ sum(limit_filedesc).
 ### oldest_start_time_seconds gauge
 
 Epoch time (seconds since 1970/1/1) at which the oldest process in the group
-started.  This is derived from field starttime(22) from /proc/[pid]/stat, added
+started. This is derived from field starttime(22) from /proc/[pid]/stat, added
 to boot time to make it relative to epoch.
 
 ### num_threads gauge
 
-Sum of number of threads of all process in the group.  Based on field num_threads(20)
-from /proc/[pid]/stat.
+Sum of number of threads of all process in the group. Based on field
+num_threads(20) from /proc/[pid]/stat.
 
 ### states gauge
 
@@ -324,12 +326,12 @@ The extra label `state` can have these values: `Running`, `Sleeping`, `Waiting`,
 
 ## Group Thread Metrics
 
-Since publishing thread metrics adds a lot of overhead, use the `-threads` command-line argument to disable them, 
-if necessary.
+Since publishing thread metrics adds a lot of overhead, use the `-threads`
+command-line argument to disable them, if necessary.
 
 All these metrics start with `namedprocess_namegroup_` and have at minimum
-the labels `groupname` and `threadname`.  `threadname` is field comm(2) from
-/proc/[pid]/stat.  Just as groupname breaks the set of processes down into
+the labels `groupname` and `threadname`. `threadname` is field comm(2) from
+/proc/[pid]/stat. Just as groupname breaks the set of processes down into
 groups, threadname breaks a given process group down into subgroups.
 
 ### thread_count gauge
@@ -339,13 +341,13 @@ Number of threads in this thread subgroup.
 ### thread_cpu_seconds_total counter
 
 Same as cpu_user_seconds_total and cpu_system_seconds_total, but broken down
-per-thread subgroup.  Unlike cpu_user_seconds_total/cpu_system_seconds_total,
+per-thread subgroup. Unlike cpu_user_seconds_total/cpu_system_seconds_total,
 the label `cpumode` is used to distinguish between `user` and `system` time.
 
 ### thread_io_bytes_total counter
 
 Same as read_bytes_total and write_bytes_total, but broken down
-per-thread subgroup.  Unlike read_bytes_total/write_bytes_total,
+per-thread subgroup. Unlike read_bytes_total/write_bytes_total,
 the label `iomode` is used to distinguish between `read` and `write` bytes.
 
 ### thread_major_page_faults_total counter
@@ -363,7 +365,7 @@ Same as context_switches_total, but broken down per-thread subgroup.
 ## Instrumentation cost
 
 process-exporter will consume CPU in proportion to the number of processes in
-the system and the rate at which new ones are created.  The most expensive
+the system and the rate at which new ones are created. The most expensive
 parts - applying regexps and executing templates - are only applied once per
 process seen, unless the command-line option -recheck is provided.
 
@@ -373,7 +375,8 @@ minimal: each time a scrape occurs, it will parse of /proc/$pid/stat and
 
 ## Dashboards
 
-An example Grafana dashboard to view the metrics is available at https://grafana.net/dashboards/249
+An example Grafana dashboard to view the metrics is available at
+https://grafana.net/dashboards/249
 
 ## Building
 
