@@ -33,28 +33,28 @@ or via docker:
 
 Important options (run process-exporter --help for full list):
 
--children (default:true) makes it so that any process that otherwise
+`-children` **(default:true)** makes it so that any process that otherwise
 isn't part of its own group becomes part of the first group found (if any) when
 walking the process tree upwards. In other words, resource usage of
 subprocesses is added to their parent's usage unless the subprocess identifies
 as a different group name.
 
--threads (default:true) means that metrics will be broken down by thread name
+`-threads` **(default:true)** means that metrics will be broken down by thread name
 as well as group name.
 
--recheck (default:false) means that on each scrape the process names are
+`-recheck` **(default:false)** means that on each scrape the process names are
 re-evaluated. This is disabled by default as an optimization, but since
 processes can choose to change their names, this may result in a process
 falling into the wrong group if we happen to see it for the first time before
 it's assumed its proper name. You can use -recheck-with-time-limit to enable this
 feature only for a specific duration after process starts.
 
--procnames is intended as a quick alternative to using a config file. Details
+`-procnames` is intended as a quick alternative to using a config file. Details
 in the following section.
 
--remove-empty-groups (default:false) forget process groups with no processes.
+`-remove-empty-groups` **(default:false)** forget process groups with no processes.
 This is particularly useful if you have some process groups that you expect will
-never return (e.g. if you have process groups named "scan-<scan-id>", and once
+never return (e.g. if you have process groups named `scan-<scan-id>`, and once
 the scan is completed no more process will ever run for that scan again).
 
 To disable any of these options, use the `-option=false`.
@@ -191,15 +191,17 @@ a process is the value found in the second field of /proc/<pid>/stat
 ("comm"), which is truncated at 15 chars. Usually this is the same as the
 name of the executable.
 
-If -namemapping isn't provided, every process with a comm value present
-in -procnames is assigned to a group based on that name, and any other
+If `-namemapping` isn't provided, every process with a comm value present
+in `-procnames` is assigned to a group based on that name, and any other
 processes are ignored.
 
-The -namemapping option is a comma-separated list of alternating
+The `-namemapping` option is a comma-separated list of alternating
 name,regexp values. It allows assigning a name to a process based on a
 combination of the process name and command line. For example, using
 
+```
   -namemapping "python2,([^/]+)\.py,java,-jar\s+([^/]+).jar"
+```
 
 will make it so that each different python2 and java -jar invocation will be
 tracked with distinct metrics. Processes whose remapped name is absent from
@@ -207,12 +209,14 @@ the procnames list will be ignored. On a Ubuntu Xenian machine being used as
 a workstation, here's a good way of tracking resource usage for a few
 different key user apps:
 
+```
   process-exporter -namemapping "upstart,(--user)" \
     -procnames chromium-browse,bash,gvim,prometheus,process-exporter,upstart:-user
+```
 
 Since upstart --user is the parent process of the X11 session, this will
 make all apps started by the user fall into the group named "upstart:-user",
-unless they're one of the others named explicitly with -procnames, like gvim.
+unless they're one of the others named explicitly with `-procnames`, like gvim.
 
 ## Group Metrics
 
@@ -236,20 +240,24 @@ CPU usage based on /proc/[pid]/stat fields utime(14) and stime(15) i.e. user and
 
 ### read_bytes_total counter
 
-Bytes read based on /proc/[pid]/io field read_bytes. The man page
-says
+Bytes read based on /proc/[pid]/io field read_bytes. The man page says
 
-> Attempt to count the number of bytes which this process really did cause to be fetched from the storage layer. This is accurate for block-backed filesystems.
+> Attempt to count the number of bytes which this process really did cause to
+> be fetched from the storage layer. This is accurate for block-backed
+> filesystems.
 
 but I would take it with a grain of salt.
 
-As `/proc/[pid]/io` are set by the kernel as read only to the process' user (see #137), to get these values you should run `process-exporter` either as that user or as `root`. Otherwise, we can't read these values and you'll get a constant 0 in the metric.
+As `/proc/[pid]/io` are set by the kernel as read only to the process' user
+(see #137), to get these values you should run `process-exporter` either as
+that user or as `root`. Otherwise, we can't read these values and you'll get a
+constant 0 in the metric.
 
 ### write_bytes_total counter
 
-Bytes written based on /proc/[pid]/io field write_bytes. As with
-read_bytes, somewhat dubious. May be useful for isolating which processes
-are doing the most I/O, but probably not measuring just how much I/O is happening.
+Bytes written based on /proc/[pid]/io field write_bytes. As with read_bytes,
+somewhat dubious. May be useful for isolating which processes are doing the
+most I/O, but probably not measuring just how much I/O is happening.
 
 ### major_page_faults_total counter
 
@@ -261,9 +269,9 @@ Number of minor page faults based on /proc/[pid]/stat field minflt(10).
 
 ### context_switches_total counter
 
-Number of context switches based on /proc/[pid]/status fields voluntary_ctxt_switches
-and nonvoluntary_ctxt_switches. The extra label `ctxswitchtype` can have two values:
-`voluntary` and `nonvoluntary`.
+Number of context switches based on /proc/[pid]/status fields
+voluntary_ctxt_switches and nonvoluntary_ctxt_switches. The extra label
+`ctxswitchtype` can have two values: `voluntary` and `nonvoluntary`.
 
 ### memory_bytes gauge
 
@@ -271,7 +279,9 @@ Number of bytes of memory used. The extra label `memtype` can have three values:
 
 *resident*: Field rss(24) from /proc/[pid]/stat, whose doc says:
 
-> This is just the pages which count toward text, data, or stack space. This does not include pages which have not been demand-loaded in, or which are swapped out.
+> This is just the pages which count toward text, data, or stack space. This
+> does not include pages which have not been demand-loaded in, or which are
+> swapped out.
 
 *virtual*: Field vsize(23) from /proc/[pid]/stat, virtual memory size.
 
@@ -298,12 +308,12 @@ group. The limit is the fd soft limit based on /proc/[pid]/limits.
 
 Normally Prometheus metrics ought to be as "basic" as possible (i.e. the raw
 values rather than a derived ratio), but we use a ratio here because nothing
-else makes sense. Suppose there are 10 procs in a given group, each with a
-soft limit of 4096, and one of them has 4000 open fds and the others all have
-40, their total fdcount is 4360 and total soft limit is 40960, so the ratio
-is 1:10, but in fact one of the procs is about to run out of fds. With
-worst_fd_ratio we're able to know this: in the above example it would be
-0.97, rather than the 0.10 you'd see if you computed sum(open_filedesc) /
+else makes sense. Suppose there are 10 procs in a given group, each with a soft
+limit of 4096, and one of them has 4000 open fds and the others all have 40,
+their total fdcount is 4360 and total soft limit is 40960, so the ratio is
+1:10, but in fact one of the procs is about to run out of fds. With
+worst_fd_ratio we're able to know this: in the above example it would be 0.97,
+rather than the 0.10 you'd see if you computed sum(open_filedesc) /
 sum(limit_filedesc).
 
 ### oldest_start_time_seconds gauge
@@ -322,7 +332,8 @@ num_threads(20) from /proc/[pid]/stat.
 Number of threads in the group in each of various states, based on the field
 state(3) from /proc/[pid]/stat.
 
-The extra label `state` can have these values: `Running`, `Sleeping`, `Waiting`, `Zombie`, `Other`.
+The extra label `state` can have these values: `Running`, `Sleeping`,
+`Waiting`, `Zombie`, `Other`.
 
 ## Group Thread Metrics
 
