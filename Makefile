@@ -5,7 +5,7 @@ BIN_DIR                 ?= $(shell pwd)
 DOCKER_IMAGE_NAME       ?= ncabatoff/process-exporter
 
 BRANCH      ?= $(shell git rev-parse --abbrev-ref HEAD)
-BUILDDATE   ?= $(shell date --iso-8601=seconds)
+BUILDDATE   ?= $(shell date "+%FT%T")
 BUILDUSER   ?= $(shell whoami)@$(shell hostname)
 REVISION    ?= $(shell git rev-parse HEAD)
 TAG_VERSION ?= $(shell git describe --tags --abbrev=0)
