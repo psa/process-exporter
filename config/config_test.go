@@ -4,7 +4,7 @@ import (
 	"time"
 
 	// "github.com/kylelemons/godebug/pretty"
-	common "github.com/ncabatoff/process-exporter"
+	common "github.com/psa/process-exporter"
 	. "gopkg.in/check.v1"
 )
 

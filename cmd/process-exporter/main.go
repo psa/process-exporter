@@ -15,15 +15,15 @@ import (
 	"time"
 
 	"github.com/ncabatoff/fakescraper"
-	common "github.com/ncabatoff/process-exporter"
-	"github.com/ncabatoff/process-exporter/collector"
-	"github.com/ncabatoff/process-exporter/config"
 	"github.com/prometheus/client_golang/prometheus"
 	verCollector "github.com/prometheus/client_golang/prometheus/collectors/version"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/common/promslog"
 	promVersion "github.com/prometheus/common/version"
 	"github.com/prometheus/exporter-toolkit/web"
+	common "github.com/psa/process-exporter"
+	"github.com/psa/process-exporter/collector"
+	"github.com/psa/process-exporter/config"
 )
 
 // Version is set at build time use ldflags.
