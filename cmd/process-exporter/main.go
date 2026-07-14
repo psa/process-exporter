@@ -21,7 +21,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	verCollector "github.com/prometheus/client_golang/prometheus/collectors/version"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/prometheus/common/promlog"
+	"github.com/prometheus/common/promslog"
 	promVersion "github.com/prometheus/common/version"
 	"github.com/prometheus/exporter-toolkit/web"
 )
@@ -33,14 +33,14 @@ func printManual() {
 	fmt.Print(`Usage:
   process-exporter [options] -config.path filename.yml
 
-or 
+or
 
   process-exporter [options] -procnames name1,...,nameN [-namemapping k1,v1,...,kN,vN]
 
 The recommended option is to use a config file, but for convenience and
 backwards compatibility the -procnames/-namemapping options exist as an
 alternative.
- 
+
 The -children option (default:true) makes it so that any process that otherwise
 isn't part of its own group becomes part of the first group found (if any) when
 walking the process tree upwards.  In other words, resource usage of
@@ -50,14 +50,14 @@ as a different group name.
 Command-line process selection (procnames/namemapping):
 
   Every process not in the procnames list is ignored.  Otherwise, all processes
-  found are reported on as a group based on the process name they share. 
+  found are reported on as a group based on the process name they share.
   Here 'process name' refers to the value found in the second field of
   /proc/<pid>/stat, which is truncated at 15 chars.
 
   The -namemapping option allows assigning a group name based on a combination of
-  the process name and command line.  For example, using 
+  the process name and command line.  For example, using
 
-    -namemapping "python2,([^/]+)\.py,java,-jar\s+([^/]+).jar" 
+    -namemapping "python2,([^/]+)\.py,java,-jar\s+([^/]+).jar"
 
   will make it so that each different python2 and java -jar invocation will be
   tracked with distinct metrics.  Processes whose remapped name is absent from
@@ -186,8 +186,8 @@ func main() {
 	)
 	flag.Parse()
 
-	promlogConfig := &promlog.Config{}
-	logger := promlog.New(promlogConfig)
+	promslogConfig := &promslog.Config{}
+	logger := promslog.New(promslogConfig)
 
 	if *showVersion {
 		fmt.Printf("%s\n", promVersion.Print("process-exporter"))
